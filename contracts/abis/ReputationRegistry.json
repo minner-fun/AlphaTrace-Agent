@@ -1,0 +1,16 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "recordFeedback",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "agent", "type": "address" },
+        { "name": "score", "type": "uint8" },
+        { "name": "metadataURI", "type": "string" }
+      ],
+      "outputs": []
+    }
+  ]
+}
+

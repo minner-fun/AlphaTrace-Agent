@@ -1,0 +1,41 @@
+{
+  "token": "WCT",
+  "network": "Arc Testnet demo dataset",
+  "observations": [
+    {
+      "type": "token_transfer",
+      "title": "Large distribution wallet transfer",
+      "description": "A 12.4M WCT transfer moved from the initial distribution wallet to a bridge-linked address.",
+      "source": "mock_onchain",
+      "tx_hash": "0x9f1d3c5b7a8e2d4c6f0a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcd",
+      "severity": "medium"
+    },
+    {
+      "type": "multisig_risk",
+      "title": "Treasury controlled by 3-of-5 multisig",
+      "description": "The largest treasury cluster appears to be controlled by a 3-of-5 multisig with limited public signer metadata.",
+      "source": "mock_onchain",
+      "address": "0x7a1b2c3d4e5f60718293a4b5c6d7e8f901234567",
+      "severity": "high"
+    },
+    {
+      "type": "holder_concentration",
+      "title": "Top holder concentration remains elevated",
+      "description": "Top 10 labelled wallets hold roughly 42% of the observed circulating supply in this demo snapshot.",
+      "source": "mock_indexer",
+      "severity": "medium"
+    }
+  ],
+  "metrics": {
+    "top_10_holder_share": 42,
+    "bridge_related_flow_usd": 1840000,
+    "multisig_controlled_supply": 31,
+    "seven_day_transfer_count": 126
+  },
+  "labels": {
+    "holder_concentration": "High",
+    "multisig_risk": "Medium to High",
+    "market_signal": "Monitor"
+  }
+}
+
