@@ -2,6 +2,13 @@
   "abi": [
     {
       "type": "function",
+      "name": "register",
+      "stateMutability": "nonpayable",
+      "inputs": [{ "name": "metadataURI", "type": "string" }],
+      "outputs": []
+    },
+    {
+      "type": "function",
       "name": "getAgent",
       "stateMutability": "view",
       "inputs": [{ "name": "agentId", "type": "uint256" }],
@@ -9,7 +16,16 @@
         { "name": "owner", "type": "address" },
         { "name": "metadataURI", "type": "string" }
       ]
+    },
+    {
+      "type": "event",
+      "name": "Transfer",
+      "anonymous": false,
+      "inputs": [
+        { "name": "from", "type": "address", "indexed": true },
+        { "name": "to", "type": "address", "indexed": true },
+        { "name": "tokenId", "type": "uint256", "indexed": true }
+      ]
     }
   ]
 }
-
