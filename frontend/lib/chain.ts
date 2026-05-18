@@ -27,3 +27,15 @@ export function getCompleteJobContractArgs(jobId: string) {
   } as const;
 }
 
+export function getFundJobContractArgs(jobId: string) {
+  if (!env.erc8183ContractAddress) {
+    throw new Error("NEXT_PUBLIC_ERC8183_CONTRACT_ADDRESS is not configured");
+  }
+
+  return {
+    address: env.erc8183ContractAddress as `0x${string}`,
+    abi: erc8183Abi,
+    functionName: "fund",
+    args: [BigInt(jobId)],
+  } as const;
+}

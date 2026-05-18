@@ -44,6 +44,18 @@ export function runAgent(jobId: string) {
   );
 }
 
+export function fundJob(jobId: string) {
+  return request<{ chain_job_id: string; status: string; tx_hash?: string }>(`/api/jobs/${jobId}/fund`, {
+    method: "POST",
+  });
+}
+
+export function completeJob(jobId: string) {
+  return request<{ chain_job_id: string; status: string; tx_hash?: string }>(`/api/jobs/${jobId}/complete`, {
+    method: "POST",
+  });
+}
+
 export function getReport(jobId: string) {
   return request<ReportResponse>(`/api/reports/${jobId}`);
 }
@@ -58,4 +70,3 @@ export function submitFeedback(jobId: string, input: { user_address: string; sco
 export function getAgentProfile() {
   return request<AgentProfile>("/api/agent/profile");
 }
-

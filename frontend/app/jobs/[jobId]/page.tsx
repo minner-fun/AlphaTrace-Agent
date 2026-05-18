@@ -2,11 +2,24 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { useAccount, useWriteContract } from "wagmi";
-import { CheckCircle2, RefreshCw, Send, Star } from "lucide-react";
+import { CheckCircle2, CircleDollarSign, FileCheck2, RefreshCw, Send, Star } from "lucide-react";
 
-import { getCompleteJobContractArgs } from "@/lib/chain";
-import { getJob, getReport, runAgent, submitFeedback } from "@/lib/api";
+import { getCompleteJobContractArgs, getFundJobContractArgs } from "@/lib/chain";
+import { completeJob, fundJob, getJob, getReport, runAgent, submitFeedback } from "@/lib/api";
+import { env } from "@/lib/env";
 import type { JobResponse, ReportResponse } from "@/lib/types";
+
+const lifecycle = [
+  { status: "open", label: "Created", icon: FileCheck2 },
+  { status: "funded", label: "Funded", icon: CircleDollarSign },
+  { status: "submitted", label: "Submitted", icon: Send },
+  { status: "completed", label: "Completed", icon: CheckCircle2 },
+];
+
+function statusIndex(status: string) {
+  const index = lifecycle.findIndex((item) => item.status === status);
+  return index === -1 ? 0 : index;
+}
 
 export default function JobDetailPage({ params }: { params: { jobId: string } }) {
   const { address } = useAccount();
@@ -14,6 +27,7 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
   const [job, setJob] = useState<JobResponse | null>(null);
   const [report, setReport] = useState<ReportResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [action, setAction] = useState<"fund" | "run" | "complete" | "feedback" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [score, setScore] = useState(90);
   const [comment, setComment] = useState("The report is useful and well-structured.");
@@ -41,27 +55,55 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
 
   async function handleRunAgent() {
     setError(null);
+    setAction("run");
     try {
       await runAgent(params.jobId);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to run agent");
+    } finally {
+      setAction(null);
+    }
+  }
+
+  async function handleFund() {
+    setError(null);
+    setAction("fund");
+    try {
+      const shouldCallChain = Boolean(env.erc8183ContractAddress && job && !job.tx_hash?.startsWith("mock-"));
+      if (shouldCallChain) {
+        await writeContractAsync(getFundJobContractArgs(params.jobId));
+      }
+      await fundJob(params.jobId);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Fund job failed");
+    } finally {
+      setAction(null);
     }
   }
 
   async function handleComplete() {
     setError(null);
+    setAction("complete");
     try {
-      await writeContractAsync(getCompleteJobContractArgs(params.jobId));
+      const shouldCallChain = Boolean(env.erc8183ContractAddress && job && !job.tx_hash?.startsWith("mock-"));
+      if (shouldCallChain) {
+        await writeContractAsync(getCompleteJobContractArgs(params.jobId));
+      }
+      await completeJob(params.jobId);
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Complete job failed. Check contract config and wallet network.");
+    } finally {
+      setAction(null);
     }
   }
 
   async function handleFeedback(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    setAction("feedback");
     try {
       await submitFeedback(params.jobId, {
         user_address: address || "0xDemoClient000000000000000000000000000000000",
@@ -71,6 +113,8 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
       setComment("Feedback submitted.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Feedback failed");
+    } finally {
+      setAction(null);
     }
   }
 
@@ -82,6 +126,12 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
     return <div className="panel">Job not found.</div>;
   }
 
+  const currentStep = statusIndex(job.status);
+  const canFund = job.status === "open";
+  const canRun = job.status === "funded";
+  const canComplete = job.status === "submitted";
+  const busy = Boolean(action) || isPending;
+
   return (
     <div className="space-y-6">
       <section className="panel">
@@ -92,6 +142,25 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
             <p className="mt-2 max-w-3xl text-sm leading-6 text-ink/65">{job.description}</p>
           </div>
           <span className="rounded-md bg-mint px-3 py-1 text-sm font-semibold text-moss">{job.status}</span>
+        </div>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-4">
+          {lifecycle.map((step, index) => {
+            const isDone = index <= currentStep;
+            return (
+              <div
+                key={step.status}
+                className={`rounded-md border p-3 ${
+                  isDone ? "border-moss/30 bg-mint/60 text-moss" : "border-ink/10 bg-white text-ink/45"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <step.icon size={17} />
+                  <span className="text-sm font-semibold">{step.label}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-6 grid gap-3 md:grid-cols-2">
@@ -113,14 +182,17 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
         {error ? <p className="mt-4 rounded-md bg-coral/10 p-3 text-sm text-coral">{error}</p> : null}
 
         <div className="mt-6 flex flex-wrap gap-3">
-          <button className="button-primary" onClick={handleRunAgent}>
-            <Send size={16} /> Run Agent
+          <button className="button-primary" disabled={!canFund || busy} onClick={handleFund}>
+            <CircleDollarSign size={16} /> {action === "fund" ? "Funding..." : "Fund Job"}
+          </button>
+          <button className="button-primary" disabled={!canRun || busy} onClick={handleRunAgent}>
+            <Send size={16} /> {action === "run" ? "Running..." : "Run Agent"}
           </button>
           <button className="button-secondary" onClick={refresh}>
             <RefreshCw size={16} /> Refresh
           </button>
-          <button className="button-secondary" disabled={isPending} onClick={handleComplete}>
-            <CheckCircle2 size={16} /> Complete Job
+          <button className="button-secondary" disabled={!canComplete || busy} onClick={handleComplete}>
+            <CheckCircle2 size={16} /> {action === "complete" || isPending ? "Completing..." : "Complete Job"}
           </button>
         </div>
       </section>
@@ -182,7 +254,9 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
                 <span className="label">Comment</span>
                 <textarea className="field min-h-24" value={comment} onChange={(event) => setComment(event.target.value)} />
               </label>
-              <button className="button-primary">Submit Feedback</button>
+              <button className="button-primary" disabled={action === "feedback"}>
+                {action === "feedback" ? "Submitting..." : "Submit Feedback"}
+              </button>
             </form>
           </aside>
         </section>
@@ -195,4 +269,3 @@ export default function JobDetailPage({ params }: { params: { jobId: string } })
     </div>
   );
 }
-

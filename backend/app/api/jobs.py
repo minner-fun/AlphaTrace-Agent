@@ -8,7 +8,7 @@ from app.database import get_db
 from app.models.feedback import Feedback
 from app.models.job import AgentJob
 from app.models.report import Report
-from app.schemas import FeedbackRequest, FeedbackResponse, JobResponse, JobSyncRequest, RunJobResponse
+from app.schemas import FeedbackRequest, FeedbackResponse, JobActionResponse, JobResponse, JobSyncRequest, RunJobResponse
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 
@@ -71,6 +71,44 @@ async def run_job(job_id: str, db: Session = Depends(get_db)):
         return await run_alpha_trace_job(db, job_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/{job_id}/fund", response_model=JobActionResponse)
+def fund_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(AgentJob).filter(AgentJob.chain_job_id == job_id).one_or_none()
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    if job.status in {"submitted", "completed"}:
+        raise HTTPException(status_code=409, detail=f"Cannot fund a {job.status} job")
+
+    job.status = "funded"
+    db.commit()
+    return JobActionResponse(
+        chain_job_id=job_id,
+        status=job.status,
+        tx_hash=f"mock-fund-{job_id}",
+    )
+
+
+@router.post("/{job_id}/complete", response_model=JobActionResponse)
+def complete_job(job_id: str, db: Session = Depends(get_db)):
+    job = db.query(AgentJob).filter(AgentJob.chain_job_id == job_id).one_or_none()
+    if job is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    report = db.query(Report).filter(Report.chain_job_id == job_id).one_or_none()
+    if report is None or job.status != "submitted":
+        raise HTTPException(status_code=409, detail="Job must have a submitted report before completion")
+
+    job.status = "completed"
+    db.commit()
+    return JobActionResponse(
+        chain_job_id=job_id,
+        status=job.status,
+        tx_hash=f"mock-complete-{job_id}",
+    )
 
 
 @router.post("/{job_id}/feedback", response_model=FeedbackResponse)
@@ -100,4 +138,3 @@ def submit_feedback(job_id: str, payload: FeedbackRequest, db: Session = Depends
         score=payload.score,
         reputation_tx_hash=reputation_tx_hash,
     )
-

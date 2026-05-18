@@ -34,6 +34,12 @@ class RunJobResponse(BaseModel):
     submit_tx_hash: str | None = None
 
 
+class JobActionResponse(BaseModel):
+    chain_job_id: str
+    status: str
+    tx_hash: str | None = None
+
+
 class ReportResponse(BaseModel):
     chain_job_id: str
     report: dict[str, Any]
@@ -52,4 +58,3 @@ class FeedbackResponse(BaseModel):
     chain_job_id: str
     score: int
     reputation_tx_hash: str | None = None
-

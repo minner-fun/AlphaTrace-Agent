@@ -15,6 +15,8 @@ async def run_alpha_trace_job(db: Session, chain_job_id: str):
     job = db.query(AgentJob).filter(AgentJob.chain_job_id == chain_job_id).one_or_none()
     if job is None:
         raise ValueError(f"Job {chain_job_id} was not synced to the local database")
+    if job.status not in {"funded", "submitted"}:
+        raise RuntimeError("Job must be funded before the AlphaTrace agent can run")
 
     task = parse_task(job.description)
     if task.task_type == "token_flow_analysis":
@@ -52,4 +54,3 @@ async def run_alpha_trace_job(db: Session, chain_job_id: str):
         "report_id": report.id,
         "submit_tx_hash": submit_tx_hash,
     }
-
