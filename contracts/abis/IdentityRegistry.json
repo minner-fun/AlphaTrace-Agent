@@ -1,0 +1,15 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "getAgent",
+      "stateMutability": "view",
+      "inputs": [{ "name": "agentId", "type": "uint256" }],
+      "outputs": [
+        { "name": "owner", "type": "address" },
+        { "name": "metadataURI", "type": "string" }
+      ]
+    }
+  ]
+}
+

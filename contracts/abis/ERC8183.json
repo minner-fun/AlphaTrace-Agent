@@ -1,0 +1,61 @@
+{
+  "abi": [
+    {
+      "type": "function",
+      "name": "createJob",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "provider", "type": "address" },
+        { "name": "description", "type": "string" },
+        { "name": "metadataURI", "type": "string" }
+      ],
+      "outputs": [{ "name": "jobId", "type": "uint256" }]
+    },
+    {
+      "type": "function",
+      "name": "fund",
+      "stateMutability": "nonpayable",
+      "inputs": [{ "name": "jobId", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "submit",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "jobId", "type": "uint256" },
+        { "name": "deliverableHash", "type": "bytes32" }
+      ],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "complete",
+      "stateMutability": "nonpayable",
+      "inputs": [{ "name": "jobId", "type": "uint256" }],
+      "outputs": []
+    },
+    {
+      "type": "function",
+      "name": "getJob",
+      "stateMutability": "view",
+      "inputs": [{ "name": "jobId", "type": "uint256" }],
+      "outputs": [
+        {
+          "components": [
+            { "name": "client", "type": "address" },
+            { "name": "provider", "type": "address" },
+            { "name": "evaluator", "type": "address" },
+            { "name": "description", "type": "string" },
+            { "name": "status", "type": "uint8" },
+            { "name": "budget", "type": "uint256" },
+            { "name": "deliverableHash", "type": "bytes32" }
+          ],
+          "name": "job",
+          "type": "tuple"
+        }
+      ]
+    }
+  ]
+}
+
