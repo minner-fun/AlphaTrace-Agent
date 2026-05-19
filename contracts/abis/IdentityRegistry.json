@@ -9,13 +9,17 @@
     },
     {
       "type": "function",
-      "name": "getAgent",
+      "name": "ownerOf",
       "stateMutability": "view",
-      "inputs": [{ "name": "agentId", "type": "uint256" }],
-      "outputs": [
-        { "name": "owner", "type": "address" },
-        { "name": "metadataURI", "type": "string" }
-      ]
+      "inputs": [{ "name": "tokenId", "type": "uint256" }],
+      "outputs": [{ "name": "", "type": "address" }]
+    },
+    {
+      "type": "function",
+      "name": "tokenURI",
+      "stateMutability": "view",
+      "inputs": [{ "name": "tokenId", "type": "uint256" }],
+      "outputs": [{ "name": "", "type": "string" }]
     },
     {
       "type": "event",
